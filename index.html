@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>樗蒲宫棋</title>
+  <link rel="stylesheet" href="css/style.css?v=16">
+</head>
+<body>
+
+<!-- ============ 主菜单 ============ -->
+<div id="main-menu" class="screen">
+  <div class="menu-title">
+    <h1>樗蒲<span class="highlight">宫</span>棋</h1>
+    <div class="menu-divider"></div>
+    <p class="subtitle">五木行棋 · 迷宫夺豆</p>
+  </div>
+
+  <nav class="menu-buttons">
+    <button id="btn-start" class="btn-classic primary">开始对弈</button>
+    <button id="btn-culture" class="btn-classic">樗蒲文化</button>
+    <button id="btn-settings" class="btn-classic">音量设置</button>
+  </nav>
+
+  <footer class="menu-footer">
+    <p>「樗蒲，五木，玄白判。王采四：卢、白、雉、牛。」— 唐·李翱《五木经》</p>
+  </footer>
+</div>
+
+<!-- ============ 模式选择 ============ -->
+<div id="mode-select" class="screen hidden">
+  <div class="panel setup-panel">
+    <h2 class="panel-title">选择对弈</h2>
+
+    <div class="setup-grid">
+      <div class="setup-options">
+        <section class="setup-section">
+          <h3 class="setup-label">对弈方式</h3>
+          <div class="setup-btns">
+            <button class="btn-toggle mode-btn active" data-mode="2P">双人对弈</button>
+            <button class="btn-toggle mode-btn" data-mode="1P">人机对弈</button>
+          </div>
+        </section>
+
+        <section id="ai-level-row" class="setup-section hidden-col">
+          <h3 class="setup-label">对手等级</h3>
+          <div class="setup-btns setup-btns-col">
+            <button class="btn-toggle ai-btn active" data-level="1">垂髫</button>
+            <button class="btn-toggle ai-btn" data-level="2">后生</button>
+            <button class="btn-toggle ai-btn" data-level="3">公子</button>
+            <button class="btn-toggle ai-btn" data-level="4">老者</button>
+          </div>
+        </section>
+
+        <section class="setup-section">
+          <h3 class="setup-label">迷宫密度</h3>
+          <div class="setup-btns">
+            <button class="btn-toggle density-btn" data-density="0.5">幽径</button>
+            <button class="btn-toggle density-btn active" data-density="0.6">回廊</button>
+            <button class="btn-toggle density-btn" data-density="0.7">广庭</button>
+          </div>
+        </section>
+      </div>
+
+      <aside class="setup-detail" id="setup-detail">
+        <h3 class="detail-title" id="detail-title">双人对弈</h3>
+        <p class="detail-desc" id="detail-desc">两位玩家同机对弈，轮流投五木、择路行走，先至十五分者胜。</p>
+      </aside>
+    </div>
+
+    <div class="panel-actions">
+      <button id="btn-mode-back" class="btn-back">← 返回</button>
+      <button id="btn-go" class="btn-go">开始对弈</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 游戏画面 ============ -->
+<div id="game-screen" class="screen hidden">
+  <canvas id="game-canvas"></canvas>
+  <div id="dpad" class="dpad" aria-label="方向控制">
+    <button type="button" class="dpad-btn dpad-up" data-dir="up" aria-label="上">↑</button>
+    <button type="button" class="dpad-btn dpad-left" data-dir="left" aria-label="左">←</button>
+    <button type="button" class="dpad-btn dpad-right" data-dir="right" aria-label="右">→</button>
+    <button type="button" class="dpad-btn dpad-down" data-dir="down" aria-label="下">↓</button>
+  </div>
+</div>
+
+<!-- ============ 文化内容 ============ -->
+<div id="culture-screen" class="screen hidden">
+  <header class="culture-header">
+    <button id="btn-culture-back" class="btn-back">← 返回</button>
+    <h2>樗蒲文化</h2>
+    <div class="header-spacer"></div>
+  </header>
+  <div id="culture-content"></div>
+</div>
+
+<!-- ============ 设置 ============ -->
+<div id="settings-screen" class="screen hidden">
+  <div class="panel panel-narrow">
+    <h2 class="panel-title">音量设置</h2>
+    <div class="settings-group">
+      <label>音效音量</label>
+      <input type="range" id="vol-sfx" min="0" max="1" step="0.05" value="0.8">
+    </div>
+    <div class="settings-group">
+      <label>环境音量</label>
+      <input type="range" id="vol-amb" min="0" max="1" step="0.05" value="0.6">
+    </div>
+    <div class="panel-actions">
+      <button id="btn-settings-back" class="btn-back">← 返回</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/data.js?v=16"></script>
+<script src="js/maze.js?v=16"></script>
+<script src="js/chupu.js?v=16"></script>
+<script src="js/board.js?v=16"></script>
+<script src="js/audio.js?v=16"></script>
+<script src="js/renderer.js?v=16"></script>
+<script src="js/input.js?v=16"></script>
+<script src="js/ai.js?v=16"></script>
+<script src="js/game.js?v=16"></script>
+<script src="js/main.js?v=16"></script>
+
+</body>
+</html>
