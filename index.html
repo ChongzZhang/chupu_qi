@@ -3,8 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>樗蒲宫棋</title>
-  <link rel="stylesheet" href="css/style.css?v=21">
+  <link rel="stylesheet" href="css/style.css?v=22">
 </head>
 <body>
 
@@ -34,17 +37,17 @@
 
     <div class="setup-grid">
       <div class="setup-options">
-        <section class="setup-section">
+        <section class="setup-section setup-section-box">
           <h3 class="setup-label">对弈方式</h3>
-          <div class="setup-btns">
-            <button class="btn-toggle mode-btn active" data-mode="2P">双人对弈</button>
-            <button class="btn-toggle mode-btn" data-mode="1P">人机对弈</button>
+          <div class="option-stack">
+            <button class="btn-toggle mode-btn" data-mode="2P">双人对弈</button>
+            <button class="btn-toggle mode-btn active" data-mode="1P">人机对弈</button>
           </div>
         </section>
 
-        <section id="ai-level-row" class="setup-section ai-level-section hidden-col">
+        <section id="ai-level-row" class="setup-section setup-section-box">
           <h3 class="setup-label">对手等级</h3>
-          <div class="ai-level-btns">
+          <div class="option-stack">
             <button class="btn-toggle ai-btn active" data-level="1">垂髫</button>
             <button class="btn-toggle ai-btn" data-level="2">后生</button>
             <button class="btn-toggle ai-btn" data-level="3">公子</button>
@@ -52,9 +55,9 @@
           </div>
         </section>
 
-        <section class="setup-section">
+        <section class="setup-section setup-section-box">
           <h3 class="setup-label">迷宫密度</h3>
-          <div class="setup-btns">
+          <div class="option-stack">
             <button class="btn-toggle density-btn" data-density="0.5">幽径</button>
             <button class="btn-toggle density-btn active" data-density="0.6">回廊</button>
             <button class="btn-toggle density-btn" data-density="0.7">广庭</button>
@@ -63,8 +66,8 @@
       </div>
 
       <aside class="setup-detail" id="setup-detail">
-        <h3 class="detail-title" id="detail-title">双人对弈</h3>
-        <p class="detail-desc" id="detail-desc">两位玩家同机对弈，轮流投五木、择路行走，先至十分者胜。</p>
+        <h3 class="detail-title" id="detail-title">人机对弈</h3>
+        <p class="detail-desc" id="detail-desc">与 AI 对弈。请在左侧选择对手等级，右侧可查看其棋风说明。</p>
       </aside>
     </div>
 
@@ -114,16 +117,16 @@
   </div>
 </div>
 
-<script src="js/data.js?v=21"></script>
-<script src="js/maze.js?v=21"></script>
-<script src="js/chupu.js?v=21"></script>
-<script src="js/board.js?v=21"></script>
-<script src="js/audio.js?v=21"></script>
-<script src="js/renderer.js?v=21"></script>
-<script src="js/input.js?v=21"></script>
-<script src="js/ai.js?v=21"></script>
-<script src="js/game.js?v=21"></script>
-<script src="js/main.js?v=21"></script>
+<script src="js/data.js?v=22"></script>
+<script src="js/maze.js?v=22"></script>
+<script src="js/chupu.js?v=22"></script>
+<script src="js/board.js?v=22"></script>
+<script src="js/audio.js?v=22"></script>
+<script src="js/renderer.js?v=22"></script>
+<script src="js/input.js?v=22"></script>
+<script src="js/ai.js?v=22"></script>
+<script src="js/game.js?v=22"></script>
+<script src="js/main.js?v=22"></script>
 
 </body>
 </html>

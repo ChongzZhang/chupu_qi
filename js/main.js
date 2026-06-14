@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
     Audio.resume();
     Audio.uiClick();
     Game.showScreen('mode-select');
-    updateSetupDetail('mode');
+    updateSetupDetail('ai');
   });
 
   document.getElementById('btn-culture').addEventListener('click', () => {
@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.classList.add('active');
       const row = document.getElementById('ai-level-row');
       if (row) row.classList.toggle('hidden-col', btn.dataset.mode !== '1P');
-      updateSetupDetail('mode');
+      updateSetupDetail(btn.dataset.mode === '1P' ? 'ai' : 'mode');
       Audio.uiClick();
     });
   });

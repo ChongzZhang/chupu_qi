@@ -241,21 +241,21 @@ html, body {
   flex-direction: column;
 }
 
-.ai-level-section {
+.setup-section-box {
   background: rgba(255, 252, 245, 0.85);
   border: 1px solid rgba(160, 120, 50, 0.35);
   border-radius: 4px;
   padding: 16px 18px 18px;
 }
 
-.ai-level-btns {
+.option-stack {
   display: flex;
   flex-direction: column;
   gap: 10px;
   width: 100%;
 }
 
-.ai-level-btns .btn-toggle {
+.option-stack .btn-toggle {
   flex: none;
   width: 100%;
   min-height: 52px;
@@ -270,16 +270,20 @@ html, body {
   box-sizing: border-box;
 }
 
-.ai-level-btns .btn-toggle:hover {
+.option-stack .btn-toggle:hover {
   border-color: rgba(160, 120, 50, 0.65);
   background: var(--paper-dark);
 }
 
-.ai-level-btns .btn-toggle.active {
+.option-stack .btn-toggle.active {
   background: linear-gradient(135deg, #3A1806, #5A3010);
   color: var(--gold-light);
   border-color: var(--gold);
   box-shadow: inset 0 1px 0 rgba(255, 240, 200, 0.12);
+}
+
+#ai-level-row.hidden-col {
+  display: none !important;
 }
 
 .setup-btns-col .btn-toggle {
