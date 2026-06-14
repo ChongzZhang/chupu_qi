@@ -4,6 +4,7 @@ const Renderer = (() => {
   let canvas, ctx;
   let boardSize = 32;
   const HUD_H = 52;
+  const MOBILE_STATUS_H = 30;
   const cam = { x: 16, y: 16, scale: 12, offX: 0, offY: 0, zoom: 1, manualUntil: 0 };
   let overviewMode = false;
 
@@ -43,21 +44,29 @@ const Renderer = (() => {
     return window.matchMedia('(hover: none), (max-width: 768px)').matches;
   }
 
-  /** 行走 / 投放路障阶段：棋盘上不叠任何 UI */
+  /** 行走 / 投放路障阶段：棋盘上不叠十采表、五木托盘等遮挡物 */
   function isBoardClearMode(state) {
     return !!(state && state.subPhase === 'moving');
+  }
+
+  function getHudHeight(state) {
+    if (!state || !isMobileLayout()) return HUD_H;
+    if (state.subPhase === 'moving') return HUD_H + MOBILE_STATUS_H;
+    return HUD_H;
   }
 
   function playAreaSize() {
     const mobile = isMobileLayout();
     const moving = isBoardClearMode(frameState);
+    const hudH = getHudHeight(frameState);
     const bottomChrome = mobile ? (moving ? MOBILE_BOTTOM_MOVING : MOBILE_BOTTOM) : 0;
-    const playH = Math.max(logicalH - HUD_H - bottomChrome, 100);
+    const playH = Math.max(logicalH - hudH - bottomChrome, 100);
     return {
       W: logicalW,
       H: logicalH,
       playW: logicalW,
       playH,
+      hudH,
       bottomChrome,
       isMobile: mobile,
     };
@@ -78,7 +87,7 @@ const Renderer = (() => {
   }
 
   function updateTransform() {
-    const { W, playH } = playAreaSize();
+    const { W, playH, hudH } = playAreaSize();
     const padding = 2;
     const cellsVisible = overviewMode
       ? boardSize + padding
@@ -87,7 +96,7 @@ const Renderer = (() => {
     cam.scale = baseScale * cam.zoom;
     clampCamPosition();
     cam.offX = W / 2;
-    cam.offY = HUD_H + playH / 2;
+    cam.offY = hudH + playH / 2;
   }
 
   function fitEntireBoard() {
@@ -543,16 +552,61 @@ const Renderer = (() => {
     ctx.restore();
   }
 
+  function drawMobileStatusBar(state) {
+    if (!isMobileLayout() || state.subPhase !== 'moving') return;
+
+    const { W } = playAreaSize();
+    const y = HUD_H;
+    const h = MOBILE_STATUS_H;
+
+    ctx.fillStyle = 'rgba(20,10,4,0.88)';
+    ctx.fillRect(0, y, W, h);
+    ctx.strokeStyle = 'rgba(200,160,64,0.3)';
+    ctx.beginPath();
+    ctx.moveTo(0, y + h);
+    ctx.lineTo(W, y + h);
+    ctx.stroke();
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const midY = y + h / 2;
+
+    if (!state.hasWalkedThisTurn && state.lastCai) {
+      const rollTxt = state.lastCai.faces || state.lastCai.combo;
+      const rollLine = `${state.lastCai.name} · ${rollTxt} · ${state.lastCai.points}筴`;
+      ctx.fillStyle = '#F5EBDA';
+      ctx.font = 'bold 12px "Noto Serif SC", serif';
+      if (state.placingObstacle) {
+        ctx.fillText(rollLine, W / 2, midY - 7);
+        ctx.fillStyle = '#D8C8A8';
+        ctx.font = '11px "Noto Serif SC", serif';
+        ctx.fillText(`须先投放路障 · 余 ${state.stepsLeft} 步`, W / 2, midY + 8);
+      } else {
+        ctx.fillText(`${rollLine} · 请行走`, W / 2, midY);
+      }
+      return;
+    }
+
+    if (state.stepsLeft > 0) {
+      ctx.fillStyle = '#F5EBDA';
+      ctx.font = 'bold 13px "Noto Serif SC", serif';
+      ctx.fillText(`余 ${state.stepsLeft} 步可走`, W / 2, midY);
+    }
+  }
+
   function drawHUD(state) {
     const { W, H } = playAreaSize();
     const fontMain = Math.max(13, Math.min(16, W * 0.014));
     const fontSub = Math.max(11, Math.min(13, W * 0.012));
+    const mobile = isMobileLayout();
+    const mobileMoving = mobile && state.subPhase === 'moving';
+
     ctx.fillStyle = 'rgba(245,235,218,0.92)';
-    ctx.fillRect(0, 0, W, 52);
+    ctx.fillRect(0, 0, W, HUD_H);
     ctx.strokeStyle = 'rgba(90,48,16,0.3)';
     ctx.beginPath();
-    ctx.moveTo(0, 52);
-    ctx.lineTo(W, 52);
+    ctx.moveTo(0, HUD_H);
+    ctx.lineTo(W, HUD_H);
     ctx.stroke();
 
     ctx.fillStyle = '#1E0E04';
@@ -567,27 +621,24 @@ const Renderer = (() => {
     const turnLabel = state.currentTurn === 'black' ? '玄方行棋' : '白方行棋';
     ctx.fillText(turnLabel, W / 2, 22);
 
-    if (state.subPhase === 'moving' && state.stepsLeft > 0) {
+    if (state.subPhase === 'moving' && state.stepsLeft > 0 && !mobileMoving) {
       ctx.font = `${fontSub}px "Noto Serif SC", serif`;
       ctx.fillStyle = '#5A3010';
       ctx.fillText(`余 ${state.stepsLeft} 步`, W / 2, 40);
     }
 
-    const mobile = isMobileLayout();
-    if (state.lastCai && !mobile) {
+    if (state.lastCai && state.subPhase === 'moving' && !state.hasWalkedThisTurn && !mobileMoving) {
       ctx.fillStyle = state.lastCai.royal ? '#A23A24' : '#5A3010';
       ctx.font = `${fontSub}px "Noto Serif SC", serif`;
       const rollTxt = state.lastCai.faces || state.lastCai.combo;
       ctx.fillText(`${state.lastCai.name} · ${rollTxt} · ${state.lastCai.points}筴`, W / 2 - 120, 32);
     }
 
-    if (state.mustPlaceObstacle && state.placingObstacle) {
-      ctx.fillStyle = mobile ? '#5A3010' : '#A23A24';
-      ctx.font = `${mobile ? fontSub : 12}px "Noto Serif SC", serif`;
-      ctx.textAlign = mobile ? 'center' : 'right';
-      const obstacleY = mobile ? 40 : 48;
-      const obstacleX = mobile ? W / 2 : W - 20;
-      ctx.fillText('须投放路障', obstacleX, obstacleY);
+    if (state.mustPlaceObstacle && state.placingObstacle && !mobileMoving) {
+      ctx.fillStyle = '#A23A24';
+      ctx.font = '12px "Noto Serif SC", serif';
+      ctx.textAlign = 'right';
+      ctx.fillText('须投放路障', W - 20, 48);
     }
 
     const timerPct = state.timer / DATA.timerMax;
@@ -602,6 +653,8 @@ const Renderer = (() => {
       ctx.textAlign = 'left';
       ctx.fillText('方向键行走 · 滚轮缩放 · 拖拽平移', 12, H - 10);
     }
+
+    drawMobileStatusBar(state);
   }
 
   function drawOverlayButtons(buttons) {
@@ -840,7 +893,10 @@ const Renderer = (() => {
   function isRolling() { return !!rollAnim; }
 
   function drawFlash(state) {
-    if (!flashText || isBoardClearMode(state)) return;
+    if (!flashText) return;
+    // 手机行走阶段：投掷结果由状态栏持续显示，走第一步后切换为步数
+    if (isMobileLayout() && state?.subPhase === 'moving' && flashText.includes('筴')) return;
+
     const { W } = playAreaSize();
     const alpha = Math.min(1, flashTimer * 2);
     ctx.globalAlpha = alpha;

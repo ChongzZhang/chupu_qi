@@ -34,6 +34,8 @@ const Game = (() => {
 
     stepsLeft: 0,
 
+    hasWalkedThisTurn: false,
+
     lastCai: null,
 
     lastRoll: [],
@@ -208,6 +210,8 @@ const Game = (() => {
 
     state.stepsLeft = 0;
 
+    state.hasWalkedThisTurn = false;
+
     state.lastCai = null;
 
     state.lastRoll = [];
@@ -283,6 +287,8 @@ const Game = (() => {
     state.subPhase = 'waiting';
 
     state.stepsLeft = 0;
+
+    state.hasWalkedThisTurn = false;
 
     state.mustPlaceObstacle = false;
 
@@ -470,6 +476,8 @@ const Game = (() => {
 
     state.subPhase = 'moving';
 
+    state.hasWalkedThisTurn = false;
+
     state.mustPlaceObstacle = true;
 
     state.placingObstacle = true;
@@ -497,6 +505,8 @@ const Game = (() => {
   function startMoving() {
 
     state.subPhase = 'moving';
+
+    state.hasWalkedThisTurn = false;
 
     const main = state.board.main[state.currentTurn];
 
@@ -671,6 +681,8 @@ const Game = (() => {
     if (!valid.some(c => c.x === x && c.y === y)) return;
 
 
+
+    state.hasWalkedThisTurn = true;
 
     Board.moveMain(state.board, team, x, y);
 
