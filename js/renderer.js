@@ -33,8 +33,8 @@ const Renderer = (() => {
     updateTransform();
   }
 
-  const MOBILE_BOTTOM = 118;
-  const MOBILE_DPAD_W = 140;
+  const MOBILE_BOTTOM = 128;
+  const MOBILE_DPAD_W = 144;
 
   function isMobileLayout() {
     return window.matchMedia('(hover: none), (max-width: 768px)').matches;
@@ -369,7 +369,7 @@ const Renderer = (() => {
     });
   }
 
-  /** 手机端：十采表置于底部（方向键右侧），不遮挡棋盘 */
+  /** 手机端：十采表置于底部（方向键右侧），名·筴两列避免重叠 */
   function drawChupuMobileTable(state) {
     const { W, H, bottomChrome } = playAreaSize();
     const tx = MOBILE_DPAD_W + 4;
@@ -378,9 +378,11 @@ const Renderer = (() => {
     const th = bottomChrome - 8;
     const cols = 2;
     const rows = Math.ceil(DATA.chupuOutcomes.length / cols);
-    const rowH = th / rows;
+    const headerH = 18;
+    const bodyH = th - headerH;
+    const rowH = bodyH / rows;
     const colW = tw / cols;
-    const headerH = 22;
+    const hiId = state.lastCai?.id;
 
     ctx.fillStyle = 'rgba(20,10,4,0.92)';
     ctx.strokeStyle = '#C8A040';
@@ -390,43 +392,39 @@ const Renderer = (() => {
     ctx.stroke();
 
     ctx.fillStyle = '#C8A040';
-    ctx.font = 'bold 10px "Noto Serif SC", serif';
+    ctx.font = 'bold 9px "Noto Serif SC", serif';
     ctx.textAlign = 'left';
-    ctx.fillText('十采表', tx + 8, ty + 14);
-
-    const hiId = state.lastCai?.id;
+    ctx.textBaseline = 'middle';
+    ctx.fillText('十采表', tx + 8, ty + 10);
 
     DATA.chupuOutcomes.forEach((row, i) => {
       const col = i % cols;
       const rowIdx = Math.floor(i / cols);
       const cx = tx + col * colW + 4;
-      const ry = ty + headerH + rowIdx * rowH;
       const cw = colW - 8;
+      const midY = ty + headerH + rowIdx * rowH + rowH / 2;
       const matched = hiId && row.id === hiId;
 
       if (matched) {
         ctx.fillStyle = 'rgba(200,160,64,0.45)';
-        ctx.fillRect(cx - 2, ry - 10, cw, rowH - 2);
+        ctx.fillRect(cx - 2, midY - rowH / 2 + 1, cw, rowH - 2);
         ctx.strokeStyle = '#E0C060';
         ctx.lineWidth = 1;
-        ctx.strokeRect(cx - 2, ry - 10, cw, rowH - 2);
+        ctx.strokeRect(cx - 2, midY - rowH / 2 + 1, cw, rowH - 2);
       }
 
+      ctx.textBaseline = 'middle';
       ctx.textAlign = 'left';
-      ctx.font = `${matched ? 'bold' : ''} 7px "Noto Serif SC", serif`;
-      ctx.fillStyle = matched ? '#F5EBDA' : '#A89878';
-      const comboShort = row.combo.length > 5 ? row.combo.slice(0, 5) : row.combo;
-      ctx.fillText(comboShort, cx, ry);
-
-      ctx.textAlign = 'center';
+      ctx.font = `${matched ? 'bold' : ''} 9px "Noto Serif SC", serif`;
       ctx.fillStyle = row.royal
         ? (matched ? '#FFB080' : '#C87050')
         : (matched ? '#D8C8A8' : '#7A6848');
-      ctx.fillText(row.name, cx + cw * 0.55, ry);
+      ctx.fillText(row.name, cx + 2, midY);
 
       ctx.textAlign = 'right';
       ctx.fillStyle = matched ? '#F5EBDA' : '#8A7040';
-      ctx.fillText(String(row.points), cx + cw - 2, ry);
+      ctx.font = `${matched ? 'bold' : ''} 9px "Noto Serif SC", serif`;
+      ctx.fillText(`${row.points}筴`, cx + cw - 2, midY);
     });
   }
 
@@ -565,7 +563,8 @@ const Renderer = (() => {
       ctx.fillText(`余 ${state.stepsLeft} 步`, W / 2, 40);
     }
 
-    if (state.lastCai) {
+    const mobile = isMobileLayout();
+    if (state.lastCai && !mobile) {
       ctx.fillStyle = state.lastCai.royal ? '#A23A24' : '#5A3010';
       ctx.font = `${fontSub}px "Noto Serif SC", serif`;
       const rollTxt = state.lastCai.faces || state.lastCai.combo;
@@ -573,10 +572,12 @@ const Renderer = (() => {
     }
 
     if (state.mustPlaceObstacle && state.placingObstacle) {
-      ctx.fillStyle = '#A23A24';
-      ctx.font = '12px "Noto Serif SC", serif';
-      ctx.textAlign = 'right';
-      ctx.fillText('须投放路障', W - 20, 48);
+      ctx.fillStyle = mobile ? '#5A3010' : '#A23A24';
+      ctx.font = `${mobile ? fontSub : 12}px "Noto Serif SC", serif`;
+      ctx.textAlign = mobile ? 'center' : 'right';
+      const obstacleY = mobile ? 40 : 48;
+      const obstacleX = mobile ? W / 2 : W - 20;
+      ctx.fillText('须投放路障', obstacleX, obstacleY);
     }
 
     const timerPct = state.timer / DATA.timerMax;
@@ -585,12 +586,10 @@ const Renderer = (() => {
     ctx.fillStyle = timerPct < 0.25 ? '#A23A24' : '#C8A040';
     ctx.fillRect(W / 2 - 40, 38, 80 * timerPct, 4);
 
-    ctx.fillStyle = 'rgba(90,48,16,0.55)';
-    ctx.font = '11px "Noto Serif SC", serif';
-    ctx.textAlign = 'left';
-    if (window.matchMedia('(hover: none), (max-width: 768px)').matches) {
-      ctx.fillText('方向键区行走 · 拖拽平移地图', 12, H - 10);
-    } else {
+    if (!mobile) {
+      ctx.fillStyle = 'rgba(90,48,16,0.55)';
+      ctx.font = '11px "Noto Serif SC", serif';
+      ctx.textAlign = 'left';
       ctx.fillText('方向键行走 · 滚轮缩放 · 拖拽平移', 12, H - 10);
     }
   }
@@ -649,7 +648,26 @@ const Renderer = (() => {
   }
 
   function drawRollPanel(state) {
-    const { W, H } = playAreaSize();
+    const { W, H, bottomChrome, isMobile } = playAreaSize();
+
+    if (isMobile) {
+      const btnH = 44;
+      const px = MOBILE_DPAD_W + 8;
+      const py = H - bottomChrome + (bottomChrome - btnH) / 2;
+      const btn = {
+        id: 'roll',
+        label: '投五木',
+        x: px,
+        y: py,
+        w: W - px - 10,
+        h: btnH,
+        primary: true,
+        fontSize: 15,
+      };
+      drawOverlayButtons([btn]);
+      return [btn];
+    }
+
     const panelW = Math.min(520, W - 24);
     const panelH = 86;
     const px = (W - panelW) / 2;
@@ -813,14 +831,40 @@ const Renderer = (() => {
 
   function drawFlash() {
     if (!flashText) return;
-    const { W, H } = playAreaSize();
+    const { W } = playAreaSize();
     const alpha = Math.min(1, flashTimer * 2);
     ctx.globalAlpha = alpha;
-    ctx.fillStyle = '#A23A24';
-    ctx.font = 'bold 36px "Noto Serif SC", serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(flashText, W / 2, H / 2);
+
+    if (isMobileLayout()) {
+      const fontSize = Math.max(11, Math.min(13, W * 0.032));
+      ctx.font = `bold ${fontSize}px "Noto Serif SC", serif`;
+      const maxW = W - 20;
+      let text = flashText;
+      while (ctx.measureText(text).width > maxW - 16 && text.length > 4) {
+        text = text.slice(0, -2) + '…';
+      }
+      const tw = ctx.measureText(text).width;
+      const padH = 7;
+      const padW = 10;
+      const bh = fontSize + padH * 2;
+      const bw = Math.min(maxW, tw + padW * 2);
+      const bx = (W - bw) / 2;
+      const by = HUD_H + 3;
+      ctx.fillStyle = 'rgba(20,10,4,0.78)';
+      roundRect(bx, by, bw, bh, 4);
+      ctx.fill();
+      ctx.fillStyle = '#F5EBDA';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, W / 2, by + bh / 2);
+    } else {
+      ctx.fillStyle = '#A23A24';
+      ctx.font = 'bold 36px "Noto Serif SC", serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(flashText, W / 2, playAreaSize().H / 2);
+    }
+
     ctx.globalAlpha = 1;
   }
 
