@@ -852,7 +852,7 @@ const Game = (() => {
 
     if (!state.board) return;
 
-
+    state.hasWalkedThisTurn = true;
 
     const main = state.board.main[state.currentTurn];
 

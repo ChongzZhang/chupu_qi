@@ -4,7 +4,7 @@ const Renderer = (() => {
   let canvas, ctx;
   let boardSize = 32;
   const HUD_H = 52;
-  const MOBILE_STATUS_H = 30;
+  const BOARD_TOP_BANNER_H = 28;
   const cam = { x: 16, y: 16, scale: 12, offX: 0, offY: 0, zoom: 1, manualUntil: 0 };
   let overviewMode = false;
 
@@ -49,16 +49,14 @@ const Renderer = (() => {
     return !!(state && state.subPhase === 'moving');
   }
 
-  function getHudHeight(state) {
-    if (!state || !isMobileLayout()) return HUD_H;
-    if (state.subPhase === 'moving') return HUD_H + MOBILE_STATUS_H;
+  function getHudHeight() {
     return HUD_H;
   }
 
   function playAreaSize() {
     const mobile = isMobileLayout();
     const moving = isBoardClearMode(frameState);
-    const hudH = getHudHeight(frameState);
+    const hudH = getHudHeight();
     const bottomChrome = mobile ? (moving ? MOBILE_BOTTOM_MOVING : MOBILE_BOTTOM) : 0;
     const playH = Math.max(logicalH - hudH - bottomChrome, 100);
     return {
@@ -552,16 +550,18 @@ const Renderer = (() => {
     ctx.restore();
   }
 
-  function drawMobileStatusBar(state) {
+  /** 手机端：固定在棋盘上端的投掷结果 / 剩余步数条 */
+  function drawMobileBoardTopBanner(state) {
     if (!isMobileLayout() || state.subPhase !== 'moving') return;
 
     const { W } = playAreaSize();
     const y = HUD_H;
-    const h = MOBILE_STATUS_H;
+    const h = BOARD_TOP_BANNER_H;
 
-    ctx.fillStyle = 'rgba(20,10,4,0.88)';
+    ctx.fillStyle = 'rgba(20,10,4,0.82)';
     ctx.fillRect(0, y, W, h);
-    ctx.strokeStyle = 'rgba(200,160,64,0.3)';
+    ctx.strokeStyle = 'rgba(200,160,64,0.45)';
+    ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(0, y + h);
     ctx.lineTo(W, y + h);
@@ -577,17 +577,17 @@ const Renderer = (() => {
       ctx.fillStyle = '#F5EBDA';
       ctx.font = 'bold 12px "Noto Serif SC", serif';
       if (state.placingObstacle) {
-        ctx.fillText(rollLine, W / 2, midY - 7);
+        ctx.fillText(rollLine, W / 2, midY - 6);
         ctx.fillStyle = '#D8C8A8';
         ctx.font = '11px "Noto Serif SC", serif';
-        ctx.fillText(`须先投放路障 · 余 ${state.stepsLeft} 步`, W / 2, midY + 8);
+        ctx.fillText(`须先投放路障 · 余 ${state.stepsLeft} 步`, W / 2, midY + 7);
       } else {
-        ctx.fillText(`${rollLine} · 请行走`, W / 2, midY);
+        ctx.fillText(rollLine, W / 2, midY);
       }
       return;
     }
 
-    if (state.stepsLeft > 0) {
+    if (state.hasWalkedThisTurn && state.stepsLeft > 0) {
       ctx.fillStyle = '#F5EBDA';
       ctx.font = 'bold 13px "Noto Serif SC", serif';
       ctx.fillText(`余 ${state.stepsLeft} 步可走`, W / 2, midY);
@@ -653,8 +653,6 @@ const Renderer = (() => {
       ctx.textAlign = 'left';
       ctx.fillText('方向键行走 · 滚轮缩放 · 拖拽平移', 12, H - 10);
     }
-
-    drawMobileStatusBar(state);
   }
 
   function drawOverlayButtons(buttons) {
@@ -971,6 +969,8 @@ const Renderer = (() => {
       if (state.obstacleHighlight && state.obstacleHighlight.length) {
         drawHighlights(state.obstacleHighlight, 'rgba(162,58,36,0.5)');
       }
+
+      drawMobileBoardTopBanner(state);
 
       if (!overviewMode && !isBoardClearMode(state)) {
         drawMinimap(state.board, state.currentTurn);
