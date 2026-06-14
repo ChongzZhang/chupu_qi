@@ -13,6 +13,8 @@ const Renderer = (() => {
   let logicalW = 800;
   let logicalH = 600;
   let dpr = 1;
+  /** 当前帧游戏状态，供 playAreaSize 在行走阶段收起手机底栏 */
+  let frameState = null;
 
   function getDpr() {
     return Math.min(window.devicePixelRatio || 1, 2.5);
@@ -34,15 +36,22 @@ const Renderer = (() => {
   }
 
   const MOBILE_BOTTOM = 128;
+  const MOBILE_BOTTOM_MOVING = 76;
   const MOBILE_DPAD_W = 144;
 
   function isMobileLayout() {
     return window.matchMedia('(hover: none), (max-width: 768px)').matches;
   }
 
+  /** 行走 / 投放路障阶段：棋盘上不叠任何 UI */
+  function isBoardClearMode(state) {
+    return !!(state && state.subPhase === 'moving');
+  }
+
   function playAreaSize() {
     const mobile = isMobileLayout();
-    const bottomChrome = mobile ? MOBILE_BOTTOM : 0;
+    const moving = isBoardClearMode(frameState);
+    const bottomChrome = mobile ? (moving ? MOBILE_BOTTOM_MOVING : MOBILE_BOTTOM) : 0;
     const playH = Math.max(logicalH - HUD_H - bottomChrome, 100);
     return {
       W: logicalW,
@@ -303,6 +312,7 @@ const Renderer = (() => {
   }
 
   function drawChupuSideTable(state) {
+    if (isBoardClearMode(state)) return;
     if (isMobileLayout()) {
       if (state.subPhase === 'waiting') return;
       drawChupuMobileTable(state);
@@ -829,8 +839,8 @@ const Renderer = (() => {
 
   function isRolling() { return !!rollAnim; }
 
-  function drawFlash() {
-    if (!flashText) return;
+  function drawFlash(state) {
+    if (!flashText || isBoardClearMode(state)) return;
     const { W } = playAreaSize();
     const alpha = Math.min(1, flashTimer * 2);
     ctx.globalAlpha = alpha;
@@ -876,6 +886,7 @@ const Renderer = (() => {
 
   function render(state) {
     if (!ctx) return;
+    frameState = state;
     syncCanvasSize();
     applyCtxTransform();
     ctx.clearRect(0, 0, logicalW, logicalH);
@@ -905,12 +916,14 @@ const Renderer = (() => {
         drawHighlights(state.obstacleHighlight, 'rgba(162,58,36,0.5)');
       }
 
-      if (!overviewMode) {
+      if (!overviewMode && !isBoardClearMode(state)) {
         drawMinimap(state.board, state.currentTurn);
       }
     }
 
-    drawMobileBottomChrome();
+    if (!isBoardClearMode(state)) {
+      drawMobileBottomChrome();
+    }
     if (state.board) {
       drawChupuSideTable(state);
     }
@@ -922,6 +935,7 @@ const Renderer = (() => {
     const displaySlots = rollAnim ? rollAnim.stickSlots : (state.lastStickSlots || []);
     const animT = rollAnim ? rollAnim.t : 0;
     const showTray = displaySticks.length && state.subPhase !== 'waiting'
+      && !isBoardClearMode(state)
       && (!isMobileLayout() || state.subPhase === 'rolling' || rollAnim);
     if (showTray) {
       drawChupuTray(displaySticks, rollAnim ? animT : 0, displayTypes, displaySlots);
@@ -937,15 +951,15 @@ const Renderer = (() => {
     let panelButtons = null;
     if (state.uiPanel === 'roll' && state.subPhase === 'waiting') {
       panelButtons = drawRollPanel(state);
-    } else if (state.promptText && (state.subPhase === 'moving' || state.placingObstacle)) {
+    } else if (state.promptText && !isBoardClearMode(state) && (state.subPhase === 'moving' || state.placingObstacle)) {
       drawHintBanner(state.promptText, state.promptSub);
-    } else if (state.promptText && !state.uiPanel) {
+    } else if (state.promptText && !state.uiPanel && !isBoardClearMode(state)) {
       drawPrompt(state.promptText, state.promptSub);
     }
 
     if (panelButtons) {
       state.overlayButtons = panelButtons;
-    } else if (state.overlayButtons) {
+    } else if (state.overlayButtons && !isBoardClearMode(state)) {
       drawOverlayButtons(state.overlayButtons);
     }
 
@@ -954,7 +968,7 @@ const Renderer = (() => {
       if (state.gameoverButtons) drawOverlayButtons(state.gameoverButtons);
     }
 
-    drawFlash();
+    drawFlash(state);
   }
 
   function measureCanvas() {
