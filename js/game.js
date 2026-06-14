@@ -266,6 +266,18 @@ const Game = (() => {
 
 
 
+  /** 手机端保持全览棋盘，桌面端跟随棋子 */
+  function focusForTurn(main) {
+    if (Renderer.isMobileLayout()) {
+      Renderer.fitEntireBoard();
+    } else {
+      Renderer.exitOverview();
+      Renderer.focusOn(main.x, main.y, true);
+    }
+  }
+
+
+
   function beginTurn() {
 
     state.subPhase = 'waiting';
@@ -470,9 +482,7 @@ const Game = (() => {
 
     const main = state.board.main[state.currentTurn];
 
-    Renderer.exitOverview();
-
-    Renderer.focusOn(main.x, main.y, true);
+    focusForTurn(main);
 
     updateObstacleHighlights();
 
@@ -490,9 +500,7 @@ const Game = (() => {
 
     const main = state.board.main[state.currentTurn];
 
-    Renderer.exitOverview();
-
-    Renderer.focusOn(main.x, main.y, true);
+    focusForTurn(main);
 
     updateMoveHighlights();
 

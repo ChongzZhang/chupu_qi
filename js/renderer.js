@@ -33,8 +33,25 @@ const Renderer = (() => {
     updateTransform();
   }
 
+  const MOBILE_BOTTOM = 118;
+  const MOBILE_DPAD_W = 140;
+
+  function isMobileLayout() {
+    return window.matchMedia('(hover: none), (max-width: 768px)').matches;
+  }
+
   function playAreaSize() {
-    return { W: logicalW, H: logicalH, playW: logicalW, playH: Math.max(logicalH - HUD_H, 120) };
+    const mobile = isMobileLayout();
+    const bottomChrome = mobile ? MOBILE_BOTTOM : 0;
+    const playH = Math.max(logicalH - HUD_H - bottomChrome, 100);
+    return {
+      W: logicalW,
+      H: logicalH,
+      playW: logicalW,
+      playH,
+      bottomChrome,
+      isMobile: mobile,
+    };
   }
 
   function defaultCellsVisible() {
@@ -286,7 +303,12 @@ const Renderer = (() => {
   }
 
   function drawChupuSideTable(state) {
-    const { W, H, playH } = playAreaSize();
+    if (isMobileLayout()) {
+      if (state.subPhase === 'waiting') return;
+      drawChupuMobileTable(state);
+      return;
+    }
+    const { W, playH } = playAreaSize();
     const tw = Math.min(168, Math.max(128, W * 0.12));
     const rowH = 17;
     const headerH = 36;
@@ -345,6 +367,79 @@ const Renderer = (() => {
         ctx.fillText('贵', tx + tw - 18, ry - 8);
       }
     });
+  }
+
+  /** 手机端：十采表置于底部（方向键右侧），不遮挡棋盘 */
+  function drawChupuMobileTable(state) {
+    const { W, H, bottomChrome } = playAreaSize();
+    const tx = MOBILE_DPAD_W + 4;
+    const ty = H - bottomChrome + 4;
+    const tw = W - tx - 6;
+    const th = bottomChrome - 8;
+    const cols = 2;
+    const rows = Math.ceil(DATA.chupuOutcomes.length / cols);
+    const rowH = th / rows;
+    const colW = tw / cols;
+    const headerH = 22;
+
+    ctx.fillStyle = 'rgba(20,10,4,0.92)';
+    ctx.strokeStyle = '#C8A040';
+    ctx.lineWidth = 1;
+    roundRect(tx, ty, tw, th, 6);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#C8A040';
+    ctx.font = 'bold 10px "Noto Serif SC", serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('十采表', tx + 8, ty + 14);
+
+    const hiId = state.lastCai?.id;
+
+    DATA.chupuOutcomes.forEach((row, i) => {
+      const col = i % cols;
+      const rowIdx = Math.floor(i / cols);
+      const cx = tx + col * colW + 4;
+      const ry = ty + headerH + rowIdx * rowH;
+      const cw = colW - 8;
+      const matched = hiId && row.id === hiId;
+
+      if (matched) {
+        ctx.fillStyle = 'rgba(200,160,64,0.45)';
+        ctx.fillRect(cx - 2, ry - 10, cw, rowH - 2);
+        ctx.strokeStyle = '#E0C060';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(cx - 2, ry - 10, cw, rowH - 2);
+      }
+
+      ctx.textAlign = 'left';
+      ctx.font = `${matched ? 'bold' : ''} 7px "Noto Serif SC", serif`;
+      ctx.fillStyle = matched ? '#F5EBDA' : '#A89878';
+      const comboShort = row.combo.length > 5 ? row.combo.slice(0, 5) : row.combo;
+      ctx.fillText(comboShort, cx, ry);
+
+      ctx.textAlign = 'center';
+      ctx.fillStyle = row.royal
+        ? (matched ? '#FFB080' : '#C87050')
+        : (matched ? '#D8C8A8' : '#7A6848');
+      ctx.fillText(row.name, cx + cw * 0.55, ry);
+
+      ctx.textAlign = 'right';
+      ctx.fillStyle = matched ? '#F5EBDA' : '#8A7040';
+      ctx.fillText(String(row.points), cx + cw - 2, ry);
+    });
+  }
+
+  function drawMobileBottomChrome() {
+    if (!isMobileLayout()) return;
+    const { W, H, bottomChrome } = playAreaSize();
+    ctx.fillStyle = 'rgba(30,18,8,0.55)';
+    ctx.fillRect(0, H - bottomChrome, W, bottomChrome);
+    ctx.strokeStyle = 'rgba(200,160,64,0.25)';
+    ctx.beginPath();
+    ctx.moveTo(0, H - bottomChrome);
+    ctx.lineTo(W, H - bottomChrome);
+    ctx.stroke();
   }
 
   function drawChupuTray(sticks, animT, stickTypes, stickSlots) {
@@ -745,8 +840,11 @@ const Renderer = (() => {
 
     drawBackground();
     if (state.board) {
-      if (!overviewMode && state.subPhase === 'moving') {
+      if (!isMobileLayout() && !overviewMode && state.subPhase === 'moving') {
         setFollow(state.board.main[state.currentTurn].x, state.board.main[state.currentTurn].y);
+      }
+      if (isMobileLayout() && state.phase === 'playing' && !overviewMode) {
+        fitEntireBoard();
       }
 
       drawMaze(state.board);
@@ -766,7 +864,10 @@ const Renderer = (() => {
       if (!overviewMode) {
         drawMinimap(state.board, state.currentTurn);
       }
+    }
 
+    drawMobileBottomChrome();
+    if (state.board) {
       drawChupuSideTable(state);
     }
 
@@ -776,7 +877,9 @@ const Renderer = (() => {
     const displayTypes = rollAnim ? rollAnim.stickTypes : (state.lastStickTypes || []);
     const displaySlots = rollAnim ? rollAnim.stickSlots : (state.lastStickSlots || []);
     const animT = rollAnim ? rollAnim.t : 0;
-    if (displaySticks.length && state.subPhase !== 'waiting') {
+    const showTray = displaySticks.length && state.subPhase !== 'waiting'
+      && (!isMobileLayout() || state.subPhase === 'rolling' || rollAnim);
+    if (showTray) {
       drawChupuTray(displaySticks, rollAnim ? animT : 0, displayTypes, displaySlots);
     }
 
@@ -855,7 +958,7 @@ const Renderer = (() => {
   }
 
   return {
-    init, render, resize, resetCamera, focusOn, fitEntireBoard, exitOverview, isOverview,
+    init, render, resize, resetCamera, focusOn, fitEntireBoard, exitOverview, isOverview, isMobileLayout,
     cam, setFollow, panCam, zoomAt,
     startRollAnim, showFlash, updateFlash, hitTestButtons, worldToScreen, isRolling,
     playAreaSize, measureCanvas,

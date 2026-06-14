@@ -55,6 +55,7 @@ const Input = (() => {
 
   function onMove(e) {
     if (!dragStart) return;
+    if (window.matchMedia('(hover: none), (max-width: 768px)').matches) return;
     const dx = e.clientX - dragStart.x;
     const dy = e.clientY - dragStart.y;
     if (!isPanning && Math.hypot(dx, dy) > 10) isPanning = true;
@@ -86,6 +87,7 @@ const Input = (() => {
 
   function onWheel(e) {
     e.preventDefault();
+    if (window.matchMedia('(hover: none), (max-width: 768px)').matches) return;
     const rect = canvas.getBoundingClientRect();
     const sx = e.clientX - rect.left;
     const sy = e.clientY - rect.top;
