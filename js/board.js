@@ -81,10 +81,42 @@ const Board = (() => {
   function canPlaceObstacle(board, x, y, team) {
     if (!Maze.isPass(board.cells, x, y)) return false;
     if (getObstacleAt(board, x, y)) return false;
-    if (countObstacles(board, team) >= DATA.maxObstacles) return false;
     if (board.main.black.x === x && board.main.black.y === y) return false;
     if (board.main.white.x === x && board.main.white.y === y) return false;
     return true;
+  }
+
+  function removeObstacleAt(board, x, y) {
+    const i = board.obstacles.findIndex(o => o.x === x && o.y === y);
+    if (i >= 0) board.obstacles.splice(i, 1);
+  }
+
+  function isEnemyObstacle(board, x, y, team) {
+    const obs = getObstacleAt(board, x, y);
+    return obs && obs.owner !== team;
+  }
+
+  /** BFS 距离；avoidEnemyObs 为 true 时尽量绕开敌方路障 */
+  function bfsDist(board, sx, sy, team, avoidEnemyObs) {
+    const dist = new Int16Array(board.size * board.size);
+    dist.fill(-1);
+    const q = [sx, sy];
+    dist[Maze.idx(sx, sy)] = 0;
+    let head = 0;
+    while (head < q.length) {
+      const x = q[head++];
+      const y = q[head++];
+      const d = dist[Maze.idx(x, y)];
+      for (const n of getNeighbors(board, x, y)) {
+        const nx = n.x;
+        const ny = n.y;
+        if (dist[Maze.idx(nx, ny)] >= 0) continue;
+        if (avoidEnemyObs && team && isEnemyObstacle(board, nx, ny, team)) continue;
+        dist[Maze.idx(nx, ny)] = d + 1;
+        q.push(nx, ny);
+      }
+    }
+    return dist;
   }
 
   function placeObstacle(board, x, y, team) {
@@ -115,9 +147,11 @@ const Board = (() => {
     return min;
   }
 
-  function minDistToScore(board, x, y) {
+  function minDistToScore(board, x, y, team, avoidEnemyObs) {
     if (!board.scorePieces.length) return 9999;
-    const dist = Maze.bfsDist(board.cells, x, y);
+    const dist = team != null
+      ? bfsDist(board, x, y, team, !!avoidEnemyObs)
+      : Maze.bfsDist(board.cells, x, y);
     let min = 9999;
     board.scorePieces.forEach(p => {
       const d = dist[Maze.idx(p.x, p.y)];
@@ -126,8 +160,10 @@ const Board = (() => {
     return min;
   }
 
-  function distBetween(board, x1, y1, x2, y2) {
-    const dist = Maze.bfsDist(board.cells, x1, y1);
+  function distBetween(board, x1, y1, x2, y2, team, avoidEnemyObs) {
+    const dist = team != null
+      ? bfsDist(board, x1, y1, team, !!avoidEnemyObs)
+      : Maze.bfsDist(board.cells, x1, y1);
     const d = dist[Maze.idx(x2, y2)];
     return d >= 0 ? d : 9999;
   }
@@ -144,6 +180,9 @@ const Board = (() => {
     minDistToScore,
     distBetween,
     countObstacles,
+    removeObstacleAt,
+    isEnemyObstacle,
+    bfsDist,
     spawnScorePiece,
   };
 })();

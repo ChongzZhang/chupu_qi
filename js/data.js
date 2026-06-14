@@ -1,10 +1,9 @@
 // 《樗蒲宫棋》数据与文案
 
 const DATA = {
-  winScore: 15,
+  winScore: 10,
   timerMax: 30,
   scorePieceCount: 6,
-  maxObstacles: 3,
 
   mazeDensities: [
     { id: '50', label: '幽径', ratio: 0.50, desc: '墙垣密布，曲折幽深。' },
@@ -21,7 +20,7 @@ const DATA = {
 
   chupuIntro: '固定五筹：凡筹一枚（黑|白）；雉筹两枚（雉|黑）；犊筹两枚（犊|白）。每枚独立投掷，雉仅黑面、犊仅白面。',
 
-  rollHint: '掷定采组 · 筴数即步数 · 贵采可获障碍道具',
+  rollHint: '掷定采组 · 筴数即步数 · 王采须先投放路障',
 
   chupuSticks: [
     { type: 'plain', count: 1, faces: ['xuan', 'bai'], tag: '黑|白' },
@@ -44,6 +43,42 @@ const DATA = {
     { id: 'kai', combo: '犊雉白白白', xuan: 0, du: 1, bai: 3, zhi: 1, name: '开', points: 12, royal: false, prob: '2/32', q: 2 },
     { id: 'bai', combo: '雉雉白白白', xuan: 0, du: 0, bai: 3, zhi: 2, name: '白', points: 8, royal: true, prob: '1/32', q: 1 },
   ],
+
+  /** 32 种物理掷面 → 采组 id（固定，勿运行时生成） */
+  chupu32Map: {
+    'bai,xuan,xuan,bai,bai': 'zhi',
+    'bai,xuan,xuan,bai,du': 'du',
+    'bai,xuan,xuan,du,bai': 'kai',
+    'bai,xuan,xuan,du,du': 'tu',
+    'bai,xuan,zhi,bai,bai': 'kai',
+    'bai,xuan,zhi,bai,du': 'jue_b',
+    'bai,xuan,zhi,du,bai': 'jue_b',
+    'bai,xuan,zhi,du,du': 'ta',
+    'bai,zhi,xuan,bai,bai': 'ta',
+    'bai,zhi,xuan,bai,du': 'jue_b',
+    'bai,zhi,xuan,du,bai': 'jue_b',
+    'bai,zhi,xuan,du,du': 'jue_a',
+    'bai,zhi,zhi,bai,bai': 'bai',
+    'bai,zhi,zhi,bai,du': 'jue_b',
+    'bai,zhi,zhi,du,bai': 'jue_b',
+    'bai,zhi,zhi,du,du': 'xiao_b',
+    'xuan,xuan,xuan,bai,bai': 'xiao_b',
+    'xuan,xuan,xuan,bai,du': 'xiao_b',
+    'xuan,xuan,xuan,du,bai': 'tu',
+    'xuan,xuan,xuan,du,du': 'lu',
+    'xuan,xuan,zhi,bai,bai': 'jue_a',
+    'xuan,xuan,zhi,bai,du': 'xiao_a',
+    'xuan,xuan,zhi,du,bai': 'xiao_a',
+    'xuan,xuan,zhi,du,du': 'tu',
+    'xuan,zhi,xuan,bai,bai': 'jue_a',
+    'xuan,zhi,xuan,bai,du': 'xiao_a',
+    'xuan,zhi,xuan,du,bai': 'xiao_a',
+    'xuan,zhi,xuan,du,du': 'sai',
+    'xuan,zhi,zhi,bai,bai': 'ta',
+    'xuan,zhi,zhi,bai,du': 'xiao_a',
+    'xuan,zhi,zhi,du,bai': 'xiao_a',
+    'xuan,zhi,zhi,du,du': 'sai',
+  },
 
   chupuTable: [
     { name: '卢', points: 16, royal: true, desc: '五筹尽玄，至尊之采。' },
@@ -78,7 +113,7 @@ const DATA = {
   },
 
   modeDesc: {
-    '2P': { title: '双人对弈', desc: '两位玩家同机轮流操作，投五木定步、迷宫择路，先至十五分者胜。' },
+    '2P': { title: '双人对弈', desc: '两位玩家同机轮流操作，投五木定步、迷宫择路，先至十分者胜。' },
     '1P': { title: '人机对弈', desc: '与 AI 对弈。请在左侧选择对手等级，右侧可查看其棋风说明。' },
   },
 };

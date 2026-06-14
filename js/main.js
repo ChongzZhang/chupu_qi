@@ -177,7 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     html += '</section>';
 
-    html += '<section><h2>本局规则</h2><div class="story"><p>双方主棋自对角大本营出发，投五木决定步数，在迷宫中逐格择路。经过玉豆得分，先至十五分者胜。掷出王采（卢、白、雉、犊）可启用障碍技能：途中投放路障，己方通行，敌方踩之停一回合。</p></div></section>';
+    html += '<section><h2>本局规则</h2><div class="story"><p>双方主棋自对角大本营出发，投五木决定步数，在迷宫中逐格择路。经过玉豆得分，先至十分者胜。掷出王采（卢、白、雉、犊）须先投放路障，放完后再行完本回合全部步数；己方通行，敌方踩之停一回合且路障消失。</p></div></section>';
 
     container.innerHTML = html;
   }

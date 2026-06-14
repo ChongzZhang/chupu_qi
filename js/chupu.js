@@ -1,10 +1,9 @@
-// 《樗蒲宫棋》五木投掷 — 固定五筹独立投掷
-// 凡筹×1（黑|白）；雉筹×2（雉|黑，仅黑面）；犊筹×2（犊|白，仅白面）
+// 《樗蒲宫棋》五木投掷 — 固定五筹 + 严格 32→12 采组映射
+// 凡筹×1（黑|白）；雉筹×2（雉|黑）；犊筹×2（犊|白）
 
 const Chupu = (() => {
   const FACE = { XUAN: 'xuan', BAI: 'bai', ZHI: 'zhi', DU: 'du' };
 
-  /** 固定五筹：每枚仅两向朝面，独立投掷 */
   const STICK_DEFS = [
     {
       slot: '凡', type: 'plain',
@@ -83,40 +82,38 @@ const Chupu = (() => {
     return parts.join('');
   }
 
-  function distCounts(c, o) {
-    let d = Math.abs(c.xuan - o.xuan) + Math.abs(c.bai - o.bai)
-      + Math.abs(c.zhi - o.zhi) + Math.abs(c.du - o.du);
-    if (o.zhi > c.zhi) d += (o.zhi - c.zhi) * 4;
-    if (o.du > c.du) d += (o.du - c.du) * 4;
-    return d;
+  function faceLabel(face, type) {
+    if (type === 'zhi') return face === FACE.ZHI ? '雉' : '黑';
+    if (type === 'du') return face === FACE.DU ? '犊' : '白';
+    return face === FACE.BAI ? '白' : '黑';
   }
 
-  function resolveCai(sticks) {
-    const c = countFaces(sticks);
-    const physicalCombo = comboLabel(c);
+  /** 五筹顺序（凡·雉·雉·犊·犊）的实际朝上面 */
+  function rollLabel(sticks, stickTypes) {
+    const types = stickTypes || STICK_DEFS.map(d => d.type);
+    return sticks.map((f, i) => faceLabel(f, types[i])).join('');
+  }
 
-    let row = DATA.chupuOutcomes.find(o => o.combo === physicalCombo);
-    if (!row) {
-      row = DATA.chupuOutcomes.find(o => o.xuan === c.xuan && o.bai === c.bai
-        && o.zhi === c.zhi && o.du === c.du);
-    }
-    if (!row) {
-      let best = null;
-      let bd = 999;
-      DATA.chupuOutcomes.forEach(o => {
-        const d = distCounts(c, o);
-        if (d < bd) { bd = d; best = o; }
-      });
-      row = best || DATA.chupuOutcomes[0];
-    }
+  function outcomeById(id) {
+    return DATA.chupuOutcomes.find(o => o.id === id);
+  }
 
+  const RESOLVE_MAP = { ...DATA.chupu32Map };
+
+  function resolveCai(sticks, stickTypes) {
+    const key = sticks.join(',');
+    const id = RESOLVE_MAP[key];
+    const row = outcomeById(id) || DATA.chupuOutcomes[0];
+    const types = stickTypes || STICK_DEFS.map(d => d.type);
+    const faces = rollLabel(sticks, types);
     return {
       id: row.id,
       name: row.name,
       points: row.points,
       royal: row.royal,
-      combo: physicalCombo,
-      tallyText: physicalCombo,
+      combo: row.combo,
+      faces,
+      tallyText: row.combo,
       prob: row.prob,
     };
   }
@@ -124,16 +121,16 @@ const Chupu = (() => {
   function roll() {
     const detailed = rollSticksDetailed();
     const sticks = detailed.map(s => s.face);
-    const cai = resolveCai(sticks);
+    const stickTypes = detailed.map(s => s.type);
+    const cai = resolveCai(sticks, stickTypes);
     return {
       sticks,
-      stickTypes: detailed.map(s => s.type),
+      stickTypes,
       stickSlots: detailed.map(s => s.slot),
       ...cai,
     };
   }
 
-  /** 雉筹仅黑面、犊筹仅白面；标记面写雉/犊 */
   function stickVisual(face, stickType) {
     if (stickType === 'zhi') {
       return {
@@ -181,12 +178,14 @@ const Chupu = (() => {
     FACE,
     STICKS,
     STICK_DEFS,
+    RESOLVE_MAP,
     roll,
     rollSticks,
     rollSticksDetailed,
     resolveCai,
     countFaces,
     comboLabel,
+    rollLabel,
     stickVisual,
     slotLabels,
     enumerateKeys,

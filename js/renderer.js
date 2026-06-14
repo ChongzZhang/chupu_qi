@@ -287,7 +287,7 @@ const Renderer = (() => {
 
   function drawChupuSideTable(state) {
     const { W, H, playH } = playAreaSize();
-    const tw = Math.min(138, Math.max(108, W * 0.1));
+    const tw = Math.min(168, Math.max(128, W * 0.12));
     const rowH = 17;
     const headerH = 36;
     const th = Math.min(headerH + DATA.chupuOutcomes.length * rowH + 8, playH - 16);
@@ -311,7 +311,6 @@ const Renderer = (() => {
     ctx.fillText('采组 · 名 · 筴', tx + tw / 2, ty + 28);
 
     const hiId = state.lastCai?.id;
-    const hiCombo = state.lastCai?.combo;
 
     DATA.chupuOutcomes.forEach((row, i) => {
       const ry = ty + headerH + i * rowH;
@@ -328,9 +327,8 @@ const Renderer = (() => {
       ctx.textAlign = 'left';
       ctx.font = `${matched ? 'bold' : ''} 9px "Noto Serif SC", serif`;
       ctx.fillStyle = matched ? '#F5EBDA' : '#A89878';
-      const comboText = matched && hiCombo ? hiCombo : row.combo;
-      const comboShort = comboText.length > 5 ? comboText.slice(0, 5) + '…' : comboText;
-      ctx.fillText(comboShort, tx + 4, ry);
+      // 十采表采组列始终显示表内固定字面，不随投掷变化
+      ctx.fillText(row.combo, tx + 4, ry);
 
       ctx.textAlign = 'center';
       ctx.fillStyle = row.royal ? (matched ? '#FFB080' : '#C87050') : (matched ? '#D8C8A8' : '#7A6848');
@@ -475,22 +473,15 @@ const Renderer = (() => {
     if (state.lastCai) {
       ctx.fillStyle = state.lastCai.royal ? '#A23A24' : '#5A3010';
       ctx.font = `${fontSub}px "Noto Serif SC", serif`;
-      ctx.fillText(`${state.lastCai.name} · ${state.lastCai.combo} · ${state.lastCai.points}筴`, W / 2 - 120, 32);
+      const rollTxt = state.lastCai.faces || state.lastCai.combo;
+      ctx.fillText(`${state.lastCai.name} · ${rollTxt} · ${state.lastCai.points}筴`, W / 2 - 120, 32);
     }
 
-    if (state.skillArmed && !state.skillUsedThisTurn && state.subPhase === 'moving') {
+    if (state.mustPlaceObstacle && state.placingObstacle) {
       ctx.fillStyle = '#A23A24';
       ctx.font = '12px "Noto Serif SC", serif';
       ctx.textAlign = 'right';
-      ctx.fillText('王采技能就绪', W - 20, 48);
-    } else {
-      const bank = state.skillBank?.[state.currentTurn] || 0;
-      if (bank > 0 && state.subPhase === 'moving' && !state.skillUsedThisTurn) {
-        ctx.fillStyle = '#A23A24';
-        ctx.font = '12px "Noto Serif SC", serif';
-        ctx.textAlign = 'right';
-        ctx.fillText(`王采已存×${bank}`, W - 20, 48);
-      }
+      ctx.fillText('须投放路障', W - 20, 48);
     }
 
     const timerPct = state.timer / DATA.timerMax;
@@ -799,9 +790,7 @@ const Renderer = (() => {
     let panelButtons = null;
     if (state.uiPanel === 'roll' && state.subPhase === 'waiting') {
       panelButtons = drawRollPanel(state);
-    } else if (state.uiPanel === 'skill' && state.subPhase === 'skillPrompt') {
-      panelButtons = drawSkillPanel(state.promptText, state.promptSub, state.overlayButtons || []);
-    } else if (state.promptText && state.subPhase === 'moving') {
+    } else if (state.promptText && (state.subPhase === 'moving' || state.placingObstacle)) {
       drawHintBanner(state.promptText, state.promptSub);
     } else if (state.promptText && !state.uiPanel) {
       drawPrompt(state.promptText, state.promptSub);
@@ -809,7 +798,7 @@ const Renderer = (() => {
 
     if (panelButtons) {
       state.overlayButtons = panelButtons;
-    } else if (state.overlayButtons && state.uiPanel !== 'skill') {
+    } else if (state.overlayButtons) {
       drawOverlayButtons(state.overlayButtons);
     }
 
